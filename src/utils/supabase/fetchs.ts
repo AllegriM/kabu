@@ -1,4 +1,4 @@
-import { Comment, EstadoSighting, ReportData } from "@/lib/types";
+import { Comment, EstadoSighting, PetType, ReportData } from "@/lib/types";
 import { createClient } from "./server";
 
 export const createReport = async (reportData: ReportData) => {
@@ -73,89 +73,52 @@ export const getSightings = async (
 
 export const getSightingsByPage = async (
   estado: EstadoSighting = "todos",
-  filter?: string,
-  page: number = 0
+  tipo: PetType = "todos",
+  query: string = "",
+  page: number = 0,
+  limit: number = 10
 ) => {
-  // FILTROS
+  const supabase = await createClient();
+
   const filtroEstados =
     estado === "todos"
       ? ["perdido", "encontrado", "transito"]
       : estado.split(",");
 
-  const tipos = filter ? filter.split(",") : ["perro", "gato", "ave", "otros"];
+  const filtroTipos =
+    tipo === "todos" ? ["perro", "gato", "ave", "otros"] : tipo.split(",");
 
-  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("get_sightings_paginated", {
+    p_estados: filtroEstados,
+    p_tipos: filtroTipos,
+    p_query_text: query || null,
+    p_page: page,
+    p_limit: limit,
+  });
 
-  // Query de COUNT (contra la VISTA)
-  const { count, error: countError } = await supabase
-    .from("sightings_with_details") // <-- 1. USAR LA VISTA
-    .select("*", { count: "exact", head: true })
-    .in("estado", filtroEstados)
-    .in("tipo", tipos);
-
-  if (countError) {
-    console.error("Error al obtener count:", countError);
+  if (error) {
+    console.error("Error en RPC get_sightings_paginated:", error);
+    return { sightings: [], count: 0, totalPages: 1, error };
   }
 
-  const limit = 10;
-  const rangeStart = page * limit;
-  const rangeEnd = rangeStart + limit - 1;
+  const sightings = data || [];
+  const totalCount = data?.[0]?.total_count ?? 0;
 
-  // Query de DATOS (contra la VISTA)
-  const { data: sightings, error } = await supabase
-    .from("sightings_with_details") // <-- 1. USAR LA VISTA
-    .select(
-      // <-- 2. SELECCIONAR CAMPOS DE LA VISTA
-      ` id,
-        descripcion,
-        foto_url,
-        created_at,
-        expires_at,
-        created_by,
-        tipo,
-        raza,
-        color,
-        estado,
-        location_geojson,
-        user_nombre,
-        user_phone
-      `
-    )
-    .in("estado", filtroEstados)
-    .in("tipo", tipos)
-    .order("created_at", { ascending: false })
-    .range(rangeStart, rangeEnd);
+  const totalPages = Math.max(Math.ceil(totalCount / limit), 1);
 
-  const totalPages = count ? Math.max(Math.ceil(count / limit), 1) : 1;
+  console.log({
+    sightings: sightings.map(({ total_count, ...rest }) => rest),
+    count: totalCount,
+    totalPages: totalPages,
+    error: null,
+  });
 
-  return { sightings, error, count: count ?? 0, totalPages };
-};
-
-export const getSightingByID = async (id: string) => {
-  const supabase = await createClient();
-  const { data: sighting, error } = await supabase
-    .from("sightings_with_details") // <-- 1. USAR LA VISTA
-    .select(
-      // <-- 2. SELECCIONAR CAMPOS DE LA VISTA
-      ` id,
-        descripcion,
-        foto_url,
-        created_at,
-        expires_at,
-        created_by,
-        tipo,
-        raza,
-        color,
-        estado,
-        location_geojson,
-        user_nombre,
-        user_phone
-      `
-    )
-    .eq("id", id)
-    .single();
-
-  return { sighting, error };
+  return {
+    sightings: sightings.map(({ total_count, ...rest }) => rest),
+    count: totalCount,
+    totalPages: totalPages,
+    error: null,
+  };
 };
 
 export const getLastSightings = async () => {

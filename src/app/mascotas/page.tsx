@@ -2,7 +2,7 @@ import React, { Suspense } from "react";
 import PetLoadingAnimation from "../components/PetLoadingAnimation";
 import { PetsFilters } from "./_components/pet-filters";
 import { getSightingsByPage } from "@/utils/supabase/fetchs";
-import { EstadoSighting } from "@/lib/types";
+import { EstadoSighting, PetType } from "@/lib/types";
 
 export const generateMetadata = async () => {
   return {
@@ -13,20 +13,34 @@ export const generateMetadata = async () => {
 export default async function Mascotas({
   searchParams,
 }: {
-  searchParams: Promise<{ estado?: string; page?: string }>;
+  searchParams: {
+    estado?: string;
+    tipo?: string;
+    query?: string;
+    page?: string;
+  };
 }) {
-  const params = await searchParams;
-  const estado = (params.estado ?? "todos") as EstadoSighting;
+  const estado = (searchParams.estado ?? "todos") as EstadoSighting;
+  const tipo = (searchParams.tipo ?? "todos") as PetType;
+  const query = searchParams.query ?? "";
+  const pageNum = searchParams.page
+    ? Math.max(0, parseInt(searchParams.page, 10) || 0)
+    : 0;
+  const limit = 10;
 
-  const pageNum = params.page ? Math.max(0, parseInt(params.page, 10) || 0) : 0;
-
-  const { sightings, count, totalPages } = await getSightingsByPage(
+  const { sightings, count, totalPages, error } = await getSightingsByPage(
     estado,
-    "",
-    pageNum
+    tipo,
+    query,
+    pageNum,
+    limit
   );
 
-  if (!sightings) {
+  if (error || !sightings || sightings.length === 0) {
+    const noResultsMessage =
+      query || estado !== "todos" || tipo !== "todos"
+        ? `No se encontraron mascotas con los filtros aplicados.`
+        : `No hay reportes de mascotas registradas aún.`;
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
@@ -39,8 +53,18 @@ export default async function Mascotas({
         </div>
 
         <h5 className="text-balance text-2xl font-bold tracking-tight mb-2">
-          No hay reportes de mascotas registradas aún.
+          {noResultsMessage}
         </h5>
+
+        <PetsFilters
+          initialEstado={estado}
+          initialTipo={tipo}
+          initialQuery={query}
+          pets={[]}
+          count={0}
+          totalPages={1}
+          pageNum={0}
+        />
       </div>
     );
   }
@@ -58,6 +82,9 @@ export default async function Mascotas({
 
       <Suspense fallback={<PetLoadingAnimation />}>
         <PetsFilters
+          initialEstado={estado}
+          initialTipo={tipo}
+          initialQuery={query}
           pets={sightings}
           count={count}
           totalPages={totalPages}

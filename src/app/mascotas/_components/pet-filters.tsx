@@ -1,10 +1,9 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Dog, Cat, Bird, Rabbit } from "lucide-react";
+import { Dog, Cat, Bird, Rabbit, Search, X } from "lucide-react";
 import { PetsGrid } from "@/app/mascotas/_components/pet-grid";
 import { EstadoSighting, Get_Own_Sighting, PetType } from "@/lib/types";
 import {
@@ -16,12 +15,16 @@ import {
 } from "@/components/ui/select";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { Input } from "@/components/ui/input";
 
 interface PetsFiltersProps {
   pets: Get_Own_Sighting[];
   count: number;
   totalPages: number;
   pageNum: number;
+  initialEstado: EstadoSighting;
+  initialTipo: PetType;
+  initialQuery: string;
 }
 
 const estados = [
@@ -32,11 +35,11 @@ const estados = [
 ];
 
 const filters = [
-  { id: "todos", label: "Todos", icon: null, color: "bg-primary" },
-  { id: "perro", label: "Perros", icon: Dog, color: "bg-blue-500" },
-  { id: "gato", label: "Gatos", icon: Cat, color: "bg-purple-500" },
-  { id: "ave", label: "Aves", icon: Bird, color: "bg-green-500" },
-  { id: "otros", label: "Otros", icon: Rabbit, color: "bg-orange-500" },
+  { id: "todos", label: "Todos", icon: null },
+  { id: "perro", label: "Perros", icon: Dog },
+  { id: "gato", label: "Gatos", icon: Cat },
+  { id: "ave", label: "Aves", icon: Bird },
+  { id: "otros", label: "Otros", icon: Rabbit },
 ];
 
 export function PetsFilters({
@@ -44,86 +47,111 @@ export function PetsFilters({
   count,
   totalPages,
   pageNum,
+  initialEstado,
+  initialTipo,
+  initialQuery,
 }: PetsFiltersProps) {
-  const [selectedFilter, setSelectedFilter] = useState<PetType>("todos");
-  const [estadoFilter, setEstadoFilter] = useState<EstadoSighting>("todos");
+  const [selectedTipo, setSelectedTipo] = useState<PetType>(initialTipo);
+  const [selectedEstado, setSelectedEstado] =
+    useState<EstadoSighting>(initialEstado);
+  const [searchInput, setSearchInput] = useState(initialQuery);
+
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
 
   const createQueryString = useCallback(
-    (name: string, value: string) => {
+    (updates: { name: string; value: string }[]) => {
       const params = new URLSearchParams(searchParams.toString());
-      params.set(name, value);
-
+      updates.forEach(({ name, value }) => {
+        if (value) {
+          params.set(name, value);
+        } else {
+          params.delete(name);
+        }
+      });
+      if (!updates.some((u) => u.name === "page")) {
+        params.set("page", "0");
+      }
       return params.toString();
     },
     [searchParams]
   );
 
-  const filteredPets =
-    selectedFilter === "todos"
-      ? pets
-      : pets.filter((pet) => pet.tipo === selectedFilter);
-
-  const getCount = (tipo: PetType) => {
-    if (tipo === "todos") return pets.length;
-    return pets.filter((pet) => pet.tipo === tipo).length;
+  // Handler para cambiar TIPO
+  const handleTipoChange = (tipo: PetType) => {
+    setSelectedTipo(tipo);
+    const queryString = createQueryString([
+      { name: "tipo", value: tipo === "todos" ? "" : tipo },
+    ]);
+    router.push(`${pathname}?${queryString}`);
   };
 
-  const handleEstadoChange = (value: EstadoSighting) => {
-    setEstadoFilter(value);
-    const params = createQueryString("estado", value);
-    router.push(pathname + "?" + params);
+  // Handler para cambiar ESTADO
+  const handleEstadoChange = (estado: EstadoSighting) => {
+    setSelectedEstado(estado);
+    const queryString = createQueryString([
+      { name: "estado", value: estado === "todos" ? "" : estado },
+    ]);
+    router.push(`${pathname}?${queryString}`);
   };
 
-  const makeHref = (page: number) => {
-    const qp = new URLSearchParams();
-    if (estadoFilter) qp.set("estado", estadoFilter);
-    qp.set("page", String(page));
-    return `/mascotas?${qp.toString()}`;
+  const handleSearchSubmit = () => {
+    const queryString = createQueryString([
+      { name: "query", value: searchInput.trim() },
+    ]);
+    router.push(`${pathname}?${queryString}`);
   };
+
+  const clearSearch = () => {
+    setSearchInput("");
+    const queryString = createQueryString([{ name: "query", value: "" }]);
+    router.push(`${pathname}?${queryString}`);
+  };
+
+  const makePageHref = (page: number) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("page", String(page));
+    return `${pathname}?${params.toString()}`;
+  };
+
+  useEffect(() => {
+    setSelectedTipo(initialTipo);
+    setSelectedEstado(initialEstado);
+    setSearchInput(initialQuery);
+  }, [initialTipo, initialEstado, initialQuery]);
 
   return (
     <div>
-      <div className="mb-8 flex flex-wrap items-center gap-3">
+      {/* --- Barra de Filtros --- */}
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        {/* Botones de TIPO */}
         {filters.map((filter) => {
           const Icon = filter.icon;
-          const isActive = selectedFilter === filter.id;
-          const count = getCount(filter.id as PetType);
-
+          const isActive = selectedTipo === filter.id;
           return (
-            <motion.div
-              key={filter.id}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
+            <motion.div key={filter.id} whileTap={{ scale: 0.95 }}>
               <Button
                 variant={isActive ? "default" : "outline"}
-                size="lg"
-                onClick={() => setSelectedFilter(filter.id as PetType)}
-                className="gap-2 relative"
+                size="sm"
+                onClick={() => handleTipoChange(filter.id as PetType)}
+                className="gap-2"
               >
                 {Icon && <Icon className="h-4 w-4" />}
                 {filter.label}
-                <Badge
-                  variant="secondary"
-                  className={`ml-1 ${
-                    isActive ? "bg-primary-foreground/20" : ""
-                  }`}
-                >
-                  {count}
-                </Badge>
               </Button>
             </motion.div>
           );
         })}
 
-        <Select
-          value={estadoFilter}
-          onValueChange={(value) => handleEstadoChange(value as EstadoSighting)}
-        >
-          <SelectTrigger className="w-[180px] ml-auto">
+        {/* Separador (opcional) */}
+        <div className="flex-grow"></div>
+
+        {/* Select de ESTADO */}
+        <Select value={selectedEstado} onValueChange={handleEstadoChange}>
+          <SelectTrigger className="w-auto sm:w-[160px]">
+            {" "}
+            {/* Ancho adaptable */}
             <SelectValue placeholder="Estado" />
           </SelectTrigger>
           <SelectContent>
@@ -136,73 +164,87 @@ export function PetsFilters({
         </Select>
       </div>
 
+      {/* --- Barra de Búsqueda --- */}
+      <div className="mb-8 flex gap-2">
+        <Input
+          placeholder="Buscar por raza, color, descripción..."
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleSearchSubmit();
+          }}
+          className="flex-grow"
+        />
+        {searchInput && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={clearSearch}
+            aria-label="Limpiar búsqueda"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
+        <Button onClick={handleSearchSubmit} className="gap-2">
+          <Search className="h-4 w-4" /> Buscar
+        </Button>
+      </div>
+
+      {/* --- Grid de Mascotas (Usa los pets ya filtrados) --- */}
       <AnimatePresence mode="wait">
         <motion.div
-          key={selectedFilter}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.3 }}
+          key={pageNum + JSON.stringify(pets)}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
         >
-          <PetsGrid pets={filteredPets} />
+          {/* PetsGrid recibe los 'pets' directamente */}
+          <PetsGrid pets={pets} />
         </motion.div>
       </AnimatePresence>
 
-      {/* PAGINADO */}
-      <div className="mt-8 flex items-center justify-center gap-4">
-        <div>
-          <span className="mr-2 text-sm text-muted-foreground">
-            Mostrando página {pageNum + 1} de {totalPages} ({count} resultados)
-          </span>
+      {/* --- Paginación --- */}
+      <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="text-sm text-muted-foreground">
+          Página {pageNum + 1} de {totalPages} ({count} resultados)
         </div>
 
         <nav aria-label="Paginación" className="flex items-center gap-2">
           {/* Prev */}
-          <Link
-            href={makeHref(Math.max(0, pageNum - 1))}
-            className={`px-3 py-1 rounded-md border ${
-              pageNum <= 0 ? "opacity-50 pointer-events-none" : ""
-            }`}
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            disabled={pageNum <= 0}
             aria-disabled={pageNum <= 0}
           >
-            Prev
-          </Link>
+            <Link href={makePageHref(pageNum - 1)}>Anterior</Link>
+          </Button>
 
-          {Array.from({ length: totalPages }).map((_, i) => {
-            const show =
-              totalPages <= 7 ||
-              i === 0 ||
-              i === totalPages - 1 ||
-              Math.abs(i - pageNum) <= 2;
-
-            if (!show) {
-              return null;
-            }
-
-            return (
-              <Link
-                key={i}
-                href={makeHref(i)}
-                className={`px-3 py-1 rounded-md border ${
-                  i === pageNum ? "bg-muted text-white font-semibold" : ""
-                }`}
-                aria-current={i === pageNum ? "page" : undefined}
-              >
-                {i + 1}
-              </Link>
-            );
-          })}
+          {/* Números de página (simplificado) */}
+          {Array.from({ length: totalPages }).map((_, i) => (
+            <Button
+              key={i}
+              asChild
+              variant={i === pageNum ? "default" : "outline"}
+              size="sm"
+              aria-current={i === pageNum ? "page" : undefined}
+            >
+              <Link href={makePageHref(i)}>{i + 1}</Link>
+            </Button>
+          ))}
 
           {/* Next */}
-          <Link
-            href={makeHref(Math.min(totalPages - 1, pageNum + 1))}
-            className={`px-3 py-1 rounded-md border ${
-              pageNum + 1 >= totalPages ? "opacity-50 pointer-events-none" : ""
-            }`}
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            disabled={pageNum + 1 >= totalPages}
             aria-disabled={pageNum + 1 >= totalPages}
           >
-            Next
-          </Link>
+            <Link href={makePageHref(pageNum + 1)}>Siguiente</Link>
+          </Button>
         </nav>
       </div>
     </div>

@@ -6,8 +6,11 @@ import Link from "next/link";
 import PetCard from "./PetCard";
 import { Get_Own_Sighting } from "@/lib/types";
 import { ContactOwnerButton } from "../publicacion/[id]/components/message-button";
+import { useAuth } from "./SessionAuth";
 
 export function RecentPets({ pets }: { pets: Get_Own_Sighting[] }) {
+  const { user } = useAuth();
+  console.log(user);
   return (
     <section className="py-16 sm:py-24">
       <div className="container mx-auto px-4">
@@ -30,7 +33,7 @@ export function RecentPets({ pets }: { pets: Get_Own_Sighting[] }) {
           {pets.length &&
             pets.map((pet) => (
               <PetCard pet={pet} key={pet.id}>
-                <ContactOwnerButton sightingId={pet.id} />
+                {user?.id ? <ContactOwnerButton sightingId={pet.id} /> : <></>}
               </PetCard>
             ))}
         </div>

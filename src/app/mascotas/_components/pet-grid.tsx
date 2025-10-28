@@ -5,8 +5,11 @@ import Link from "next/link";
 import { Get_Own_Sighting } from "@/lib/types";
 import PetCard from "@/app/components/PetCard";
 import { ContactOwnerButton } from "@/app/publicacion/[id]/components/message-button";
+import { useAuth } from "@/app/components/SessionAuth";
 
 export function PetsGrid({ pets }: { pets: Get_Own_Sighting[] }) {
+  const { user } = useAuth();
+
   if (pets.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -41,7 +44,7 @@ export function PetsGrid({ pets }: { pets: Get_Own_Sighting[] }) {
                     Ver en mapa
                   </Link>
                 </Button>
-                <ContactOwnerButton sightingId={pet.id} />
+                {user.id && <ContactOwnerButton sightingId={pet.id} />}
               </>
             )}
           </div>
