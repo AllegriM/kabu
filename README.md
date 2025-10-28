@@ -8,9 +8,7 @@ Reuniendo mascotas con sus familias, más rápido.
 
 Kábu es una aplicación web open-source diseñada para conectar instantáneamente a dueños de mascotas con su comunidad local cuando una mascota se pierde o es encontrada. A diferencia de los grupos de Facebook estáticos, Kábu utiliza tecnología geoespacial, alertas en tiempo real y viralización social para maximizar las posibilidades de un reencuentro feliz.
 
-![alt text](kabu.PNG)
-
----
+## ![alt text](kabu.webp)
 
 ## 🚀 Características Principales
 
