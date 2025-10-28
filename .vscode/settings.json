@@ -1,0 +1,15 @@
+{
+  // Habilita Deno para este proyecto
+  "deno.enable": true,
+
+  // (Opcional pero recomendado) Habilita el 'linter' de Deno
+  "deno.lint": true,
+
+  // (Opcional pero recomendado) Habilita 'unstable' APIs de Deno
+  "deno.unstable": true,
+
+  // --- ¡ESTA ES LA LÍNEA MÁS IMPORTANTE! ---
+  // Le dice a VS Code dónde encontrar el mapa de importaciones
+  // que Supabase crea para ti.
+  "deno.importMap": "./supabase/import_map.json"
+}
