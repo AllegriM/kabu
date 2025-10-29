@@ -1,14 +1,15 @@
-import { Sighting } from "@/lib/types";
+import { Get_Own_Sighting } from "@/lib/types";
 import Link from "next/link";
+import { JSX } from "react";
 
 export function PopUpContent({
   s,
   tipoEmoji,
   estadoBadge,
 }: {
-  s: Sighting;
-  tipoEmoji: any;
-  estadoBadge: any;
+  s: Get_Own_Sighting;
+  tipoEmoji: string;
+  estadoBadge: JSX.Element;
 }) {
   return (
     <div

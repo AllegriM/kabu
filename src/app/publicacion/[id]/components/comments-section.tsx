@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { User } from "@supabase/supabase-js";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,7 @@ import { AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { createPublicationComment } from "@/utils/supabase/fetchsClient";
 import { CommentItem } from "./comment-item";
+import { Create_Comment, SupabaseUserData } from "@/lib/types";
 
 interface Comment {
   id: number;
@@ -24,7 +24,7 @@ interface Comment {
 interface CommentsSectionProps {
   sightingId: string;
   comments: Comment[];
-  user: User | null;
+  user: SupabaseUserData | null;
 }
 
 export function CommentsSection({
@@ -39,7 +39,7 @@ export function CommentsSection({
   // --- Lógica de handlers ---
 
   const handleSubmitComment = async () => {
-    if (!user) return toast.error("Debes iniciar sesión para comentar");
+    if (!user?.id) return toast.error("Debes iniciar sesión para comentar");
     if (newComment.trim().length === 0)
       return toast.error("El comentario no puede estar vacio");
     if (newComment.length > 2000)
@@ -47,12 +47,11 @@ export function CommentsSection({
 
     setSubmitting(true);
 
-    const commentData = {
+    const commentData: Create_Comment = {
       user_id: user.id,
       sighting_id: sightingId,
       parent_id: null,
       body: newComment,
-      created_at: new Date().toISOString(),
     };
 
     await createPublicationComment(commentData);
@@ -80,7 +79,7 @@ export function CommentsSection({
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Formulario de comentario nuevo */}
-        {user ? (
+        {user?.id ? (
           <div className="flex gap-3">
             <Avatar className="h-10 w-10 flex-shrink-0">
               <AvatarImage src={user.user_metadata?.picture || ""} />

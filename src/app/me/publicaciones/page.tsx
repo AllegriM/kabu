@@ -5,7 +5,7 @@ import { MyPublicationsContent } from "../_components/MyPublicationsContent";
 
 export default async function MisPublicaciones() {
   const { sightings } = await getUserSightings();
-
+  console.log(sightings);
   return (
     <section>
       <div className="container mx-auto px-4 py-8">

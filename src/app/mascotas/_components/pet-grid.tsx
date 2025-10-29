@@ -44,7 +44,7 @@ export function PetsGrid({ pets }: { pets: Get_Own_Sighting[] }) {
                     Ver en mapa
                   </Link>
                 </Button>
-                {user.id && <ContactOwnerButton sightingId={pet.id} />}
+                {user && user.id && <ContactOwnerButton sightingId={pet.id} />}
               </>
             )}
           </div>

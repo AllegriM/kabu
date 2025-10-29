@@ -1,7 +1,14 @@
 "use client";
-import { Sighting } from "@/lib/types";
+import { Get_Own_Sighting, Sighting } from "@/lib/types";
 import L from "leaflet";
-import { MapContainer, TileLayer, Tooltip, Marker, Popup } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Tooltip,
+  Marker,
+  Popup,
+  useMapEvents,
+} from "react-leaflet";
 import { PopUpContent } from "./PopUpContent";
 
 const DogIcon = new L.DivIcon({
@@ -29,12 +36,30 @@ const NoIcon = new L.DivIcon({
   iconAnchor: [10, 10],
 });
 
+function MapClickHandler({
+  onClick,
+}: {
+  onClick?: (lat: number, lng: number) => void;
+}) {
+  useMapEvents({
+    click(e) {
+      // Si se proporciona la función onClick, llámala con las coordenadas
+      if (onClick) {
+        onClick(e.latlng.lat, e.latlng.lng);
+      }
+    },
+  });
+  return null; // Este componente no renderiza nada visible
+}
+
 export default function Map({
   sightings,
   searchParams,
+  onMapClick,
 }: {
-  sightings: Sighting[];
+  sightings: Get_Own_Sighting[];
   searchParams?: number[];
+  onMapClick?: (lat: number, lng: number) => void;
 }) {
   const center: [number, number] =
     Array.isArray(searchParams) && searchParams.length >= 2
@@ -48,6 +73,7 @@ export default function Map({
       zoom={13}
       center={center}
     >
+      <MapClickHandler onClick={onMapClick} />
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

@@ -9,9 +9,12 @@ import { Metadata } from "next";
 export async function generateMetadata({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }): Promise<Metadata> {
-  const { sighting } = await getSightingByID(params.id);
+  const resolvedParams = await params;
+  const id = resolvedParams.id;
+
+  const { sighting } = await getSightingByID(id);
 
   if (!sighting) {
     return {
@@ -43,6 +46,7 @@ export default async function PublicacionPage({
   if (!sighting) {
     notFound();
   }
+  console.log(comments);
 
   return <PublicationDetail sighting={sighting} comments={comments} />;
 }

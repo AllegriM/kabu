@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Edit, Trash2, Check } from "lucide-react";
 import Link from "next/link";
 import { EditPetForm } from "@/app/me/_components/edit-pet-form";
-import { Get_Own_Sighting } from "@/lib/types";
+import { Get_Own_Sighting, Update_Sighting } from "@/lib/types";
 import PetCard from "@/app/components/PetCard";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -24,7 +24,7 @@ const deletePet = async (id: string) => {
   return response;
 };
 
-const editPet = async (data: Omit<Get_Own_Sighting, "users">) => {
+const editPet = async (data: Update_Sighting) => {
   const response = await fetch("/api/mascotas", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -50,9 +50,7 @@ export function MyPublicationsContent({
     setEditingPet(pet);
   };
 
-  const handleSaveEdit = async (
-    updatedPet: Omit<Get_Own_Sighting, "users">
-  ) => {
+  const handleSaveEdit = async (updatedPet: Update_Sighting) => {
     const response = await editPet(updatedPet);
     if (response.ok) {
       toast.success("Mascota editada con exito!");
@@ -66,10 +64,35 @@ export function MyPublicationsContent({
   };
 
   const handleMarkAsReunited = async (updatedPet: Get_Own_Sighting) => {
-    const response = await editPet({ ...updatedPet, estado: "encontrado" });
+    if (!updatedPet.location_geojson?.coordinates) {
+      toast.error("Error: Faltan datos de ubicación para esta mascota.");
+      return;
+    }
+
+    const [lng, lat] = updatedPet.location_geojson.coordinates;
+
+    const updateData: Update_Sighting = {
+      id: updatedPet.id,
+      descripcion: updatedPet.descripcion,
+      foto_url: updatedPet.foto_url,
+      created_at: new Date(updatedPet.created_at),
+      expires_at: new Date(updatedPet.expires_at),
+      created_by: updatedPet.created_by,
+      tipo: updatedPet.tipo,
+      raza: updatedPet.raza,
+      color: updatedPet.color,
+      lat: lat,
+      lng: lng,
+      estado: "encontrado",
+    };
+
+    const response = await editPet(updateData);
+
     if (response.ok) {
       toast.success("Mascota marcada como ENCONTRADO con exito!");
       router.refresh();
+    } else {
+      toast.error("Error al marcar como encontrado.");
     }
   };
 

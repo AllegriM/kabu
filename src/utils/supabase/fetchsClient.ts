@@ -1,3 +1,4 @@
+import { Comment, Create_Comment } from "@/lib/types";
 import { createClient } from "./client";
 
 export const createOwnZone = async (
@@ -102,7 +103,7 @@ export const viewNotifications = async (notifications: Notification[]) => {
   return { data, error };
 };
 
-export const createPublicationComment = async (comment: Comment) => {
+export const createPublicationComment = async (comment: Create_Comment) => {
   const supabase = createClient();
 
   const { data, error } = await supabase

@@ -1,5 +1,13 @@
-import { Comment, EstadoSighting, PetType, ReportData } from "@/lib/types";
+import {
+  Comment,
+  EstadoSighting,
+  Get_Own_Sighting,
+  PetType,
+  ReportData,
+  SightingWithCount,
+} from "@/lib/types";
 import { createClient } from "./server";
+import { PostgrestError } from "@supabase/supabase-js";
 
 export const createReport = async (reportData: ReportData) => {
   const supabase = await createClient();
@@ -44,6 +52,7 @@ export const getUserSightings = async () => {
         color,
         estado,
         location_geojson,
+        created_by,
         user_nombre,
         user_phone
       `
@@ -71,13 +80,44 @@ export const getSightings = async (
   return { sightings, error };
 };
 
+export const getSightingByID = async (id: string) => {
+  const supabase = await createClient();
+  const { data: sighting, error } = await supabase
+    .from("sightings_with_details")
+    .select(
+      ` id,
+        descripcion,
+        foto_url,
+        created_at,
+        expires_at,
+        created_by,
+        tipo,
+        raza,
+        color,
+        estado,
+        location_geojson,
+        user_nombre,
+        user_phone
+      `
+    )
+    .eq("id", id)
+    .single();
+
+  return { sighting, error };
+};
+
 export const getSightingsByPage = async (
   estado: EstadoSighting = "todos",
   tipo: PetType = "todos",
   query: string = "",
   page: number = 0,
   limit: number = 10
-) => {
+): Promise<{
+  sightings: Get_Own_Sighting[];
+  count: number;
+  totalPages: number;
+  error: PostgrestError | null;
+}> => {
   const supabase = await createClient();
 
   const filtroEstados =
@@ -101,20 +141,14 @@ export const getSightingsByPage = async (
     return { sightings: [], count: 0, totalPages: 1, error };
   }
 
-  const sightings = data || [];
-  const totalCount = data?.[0]?.total_count ?? 0;
-
+  const results = (data as SightingWithCount[]) || [];
+  const totalCount = results.length > 0 ? results[0].total_count : 0;
   const totalPages = Math.max(Math.ceil(totalCount / limit), 1);
 
-  console.log({
-    sightings: sightings.map(({ total_count, ...rest }) => rest),
-    count: totalCount,
-    totalPages: totalPages,
-    error: null,
-  });
+  const sightings = results.map(({ total_count, ...rest }) => rest);
 
   return {
-    sightings: sightings.map(({ total_count, ...rest }) => rest),
+    sightings,
     count: totalCount,
     totalPages: totalPages,
     error: null,
@@ -125,9 +159,8 @@ export const getLastSightings = async () => {
   const supabase = await createClient();
 
   const { data: sightings, error } = await supabase
-    .from("sightings_with_details") // <-- 1. USAR LA VISTA
+    .from("sightings_with_details")
     .select(
-      // <-- 2. SELECCIONAR CAMPOS DE LA VISTA
       ` id,
         descripcion,
         foto_url,
@@ -217,20 +250,23 @@ export const searchSightings = async (
   return { sightings, error };
 };
 
-export const getPublicationComments = async (id: string) => {
+export const getPublicationComments = async (
+  id: string
+): Promise<{ comments: Comment[]; error: PostgrestError | null }> => {
   const supabase = await createClient();
 
-  const { data: comments, error } = await supabase
+  const { data, error } = await supabase
     .from("comments")
-    .select("*")
-    .eq("sighting_id", id);
+    .select("*, user:users(id, nombre, avatar_url)")
+    .eq("sighting_id", id)
+    .order("created_at", { ascending: true });
 
   if (error) {
-    console.error("Error en get comments:", error.message);
+    console.error("Error fetching comments:", error.message);
+    return { comments: [], error };
   }
 
-  console.log(comments);
-  // 'sightings' ahora tendrá la columna extra 'relevance'
-  // que puedes usar para mostrar qué tan buena fue la coincidencia
-  return { comments, error };
+  const comments = (data as Comment[] | null) ?? [];
+
+  return { comments, error: null };
 };

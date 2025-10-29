@@ -52,7 +52,7 @@ export function PublicationDetail({
   comments: Comment[];
 }) {
   const { user } = useAuth();
-
+  console.log(user);
   const [timeAgo, setTimeAgo] = useState("");
   const [expiresIn, setExpiresIn] = useState("");
 
@@ -198,9 +198,6 @@ export function PublicationDetail({
                       <p className="text-sm text-muted-foreground">
                         {sighting.location_geojson.coordinates}
                       </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {sighting.lat}, {sighting.lng}
-                      </p>
                     </div>
                   </div>
 
@@ -330,7 +327,7 @@ export function PublicationDetail({
                       <Phone className="h-4 w-4" />
                       Llamar
                     </Button>
-                    {user ? (
+                    {user && user.id ? (
                       <ContactOwnerButton sightingId={sighting.id} />
                     ) : (
                       <Button

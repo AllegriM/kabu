@@ -1,3 +1,6 @@
+import { UserAppMetadata, UserMetadata } from "@supabase/supabase-js";
+import { GeoJsonObject } from "geojson";
+
 export type PetType = "todos" | "perro" | "gato" | "ave" | "otros";
 
 export interface Update_Sighting {
@@ -20,12 +23,12 @@ export interface Get_Own_Sighting extends Sighting {
   user_phone: string;
 }
 
+export type SightingWithCount = Get_Own_Sighting & { total_count: number };
+
 export type EstadoSighting = "todos" | "perdido" | "encontrado" | "transito";
 
 export interface Sighting {
   id: string;
-  lat: number;
-  lng: number;
   descripcion: string;
   foto_url: string;
   created_at: Date;
@@ -62,30 +65,16 @@ export interface UserData {
 export interface SupabaseUserData {
   id?: string;
   email?: string | null;
-  app_metadata?: {
-    provider: string;
-    providers: string[];
-  };
-  user_metadata?: {
-    avatar_url: string;
-    email: string;
-    email_verified: boolean;
-    full_name: string;
-    iss: string;
-    name: string;
-    phone_verified: boolean;
-    picture: string;
-    provider_id: string;
-    sub: string;
-  };
+  app_metadata?: UserAppMetadata;
+  user_metadata?: UserMetadata;
 }
 
 export interface AlertZone {
   id: string;
-  name: string;
-  zone: [number, number][];
-  created_at: Date;
   user_id: string;
+  name: string;
+  created_at: string;
+  zone: GeoJsonObject | null;
 }
 
 export interface Notification {
@@ -97,6 +86,13 @@ export interface Notification {
   link_url: string;
   is_read: boolean;
   created_at: string;
+}
+
+export interface Create_Comment {
+  user_id: string;
+  sighting_id: string;
+  parent_id: number | null;
+  body: string;
 }
 
 export interface Comment {

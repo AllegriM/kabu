@@ -9,16 +9,18 @@ import Link from "next/link";
 import { useState } from "react";
 import { MapFilters } from "@/app/map/components/MapFilters";
 import { FullScreenMap } from "./FullScreenMap";
-import { Sighting } from "@/lib/types";
+import { Get_Own_Sighting, UserData } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/components/SessionAuth";
 
 export default function MapClient({
   sightings,
   searchParams,
+  userData,
 }: {
-  sightings: Sighting[];
+  sightings: Get_Own_Sighting[];
   searchParams?: number[];
+  userData: UserData;
 }) {
   const router = useRouter();
   const { user } = useAuth();
@@ -26,8 +28,8 @@ export default function MapClient({
   const [selectedLocation, setSelectedLocation] = useState<{
     lat: number;
     lng: number;
-  } | null>(null);
-  const [showForm, setShowForm] = useState(false);
+  } | null>();
+  const [showForm, setShowForm] = useState(true);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
   const handleMapClick = (lat: number, lng: number) => {
@@ -93,11 +95,11 @@ export default function MapClient({
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
             className="absolute right-0 top-0 z-[1001] h-full w-full overflow-y-auto bg-background shadow-2xl sm:w-[400px]"
           >
-            {!user ? (
+            {!user?.id ? (
               <LoginPrompt onClose={handleFormClose} />
             ) : (
               <PetReportForm
-                userData={user}
+                userData={userData}
                 location={selectedLocation}
                 onClose={handleFormClose}
               />

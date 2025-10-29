@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { X, Upload, Check } from "lucide-react";
-import { PetType, ReportData, UserData } from "@/lib/types";
+import { EstadoSighting, PetType, ReportData, UserData } from "@/lib/types";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -47,8 +47,8 @@ export function PetReportForm({
     color: "",
     descripcion: "",
     estado: "",
-    contactName: userData.nombre || "",
-    contactPhone: userData.phone || "",
+    contactName: userData?.nombre || "",
+    contactPhone: userData?.phone || "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -66,10 +66,10 @@ export function PetReportForm({
       created_at: new Date(),
       expires_at: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 dias
       created_by: userData.id,
-      estado: formData.estado,
+      estado: formData.estado as EstadoSighting,
     };
 
-    if (!userData.phone || userData.phone !== formData.contactPhone) {
+    if (!userData?.phone || userData?.phone !== formData.contactPhone) {
       try {
         const res = await fetch("/api/users", {
           method: "PUT",

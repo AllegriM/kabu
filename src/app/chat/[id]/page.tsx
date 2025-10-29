@@ -18,7 +18,7 @@ type ChatMessage = {
   // Añade aquí los datos del JOIN si los traes (ej: user_nombre)
 };
 
-export default function ChatRoomPage({ userName }: { userName: string }) {
+export default function ChatRoomPage() {
   const params = useParams();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);

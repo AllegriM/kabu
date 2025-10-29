@@ -4,27 +4,34 @@ import { PetsFilters } from "./_components/pet-filters";
 import { getSightingsByPage } from "@/utils/supabase/fetchs";
 import { EstadoSighting, PetType } from "@/lib/types";
 
-export const generateMetadata = async () => {
-  return {
-    title: "Mascotas Reportadas - Mascotas Perdidas",
-  };
-};
-
-export default async function Mascotas({
-  searchParams,
-}: {
-  searchParams: {
+type MascotasPageProps = {
+  params: Promise<{}>;
+  searchParams: Promise<{
     estado?: string;
     tipo?: string;
     query?: string;
     page?: string;
+  }>;
+};
+
+export const generateMetadata = async () => {
+  return {
+    title: "Mascotas Reportadas - Kábu",
   };
-}) {
-  const estado = (searchParams.estado ?? "todos") as EstadoSighting;
-  const tipo = (searchParams.tipo ?? "todos") as PetType;
-  const query = searchParams.query ?? "";
-  const pageNum = searchParams.page
-    ? Math.max(0, parseInt(searchParams.page, 10) || 0)
+};
+
+export default async function Mascotas({
+  params,
+  searchParams,
+}: MascotasPageProps) {
+  await params;
+  const resolvedSearchParams = await searchParams;
+
+  const estado = (resolvedSearchParams.estado ?? "todos") as EstadoSighting;
+  const tipo = (resolvedSearchParams.tipo ?? "todos") as PetType;
+  const query = resolvedSearchParams.query ?? "";
+  const pageNum = resolvedSearchParams.page
+    ? Math.max(0, parseInt(resolvedSearchParams.page, 10) || 0)
     : 0;
   const limit = 10;
 
@@ -43,6 +50,7 @@ export default async function Mascotas({
         : `No hay reportes de mascotas registradas aún.`;
     return (
       <div className="container mx-auto px-4 py-8">
+        {/* ... (Título) ... */}
         <div className="mb-8">
           <h1 className="text-balance text-4xl font-bold tracking-tight mb-2">
             Mascotas reportadas
@@ -51,11 +59,6 @@ export default async function Mascotas({
             Explora todas las mascotas encontradas en la comunidad
           </p>
         </div>
-
-        <h5 className="text-balance text-2xl font-bold tracking-tight mb-2">
-          {noResultsMessage}
-        </h5>
-
         <PetsFilters
           initialEstado={estado}
           initialTipo={tipo}
@@ -65,6 +68,9 @@ export default async function Mascotas({
           totalPages={1}
           pageNum={0}
         />
+        <p className="text-center mt-10 text-muted-foreground">
+          {noResultsMessage}
+        </p>
       </div>
     );
   }

@@ -40,7 +40,7 @@ export function AlertZonesContent({ zones }: { zones: AlertZone[] }) {
 
     router.refresh();
   };
-
+  console.log(zones);
   return (
     <div className="container mx-auto px-4 py-8">
       <motion.div
@@ -142,7 +142,7 @@ export function AlertZonesContent({ zones }: { zones: AlertZone[] }) {
                                 className="text-sm text-muted-foreground"
                                 suppressHydrationWarning
                               >
-                                {zone.zone.length} puntos • Creada el{" "}
+                                Creada el{" "}
                                 {new Date(zone.created_at).toLocaleString()}
                               </p>
                             </div>

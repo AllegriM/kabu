@@ -24,7 +24,7 @@ export function Header({
   notifications,
 }: {
   user: SupabaseUserData;
-  notifications: Notification[];
+  notifications: Notification[] | [];
 }) {
   const router = useRouter();
 

@@ -42,12 +42,12 @@ export default async function ChatHistoryPage() {
             href={`/chat/${room.room_id}`}
             className="flex items-center gap-4 p-4 border-b hover:bg-muted/50 transition-colors"
           >
-            <Avatar className="h-12 w-12">
+            {/* <Avatar className="h-12 w-12">
               <AvatarImage src={room.other_user_avatar || ""} />
               <AvatarFallback>
                 {getInitials(room.other_user_name || "U")}
               </AvatarFallback>
-            </Avatar>
+            </Avatar> */}
             <div className="flex-1 overflow-hidden">
               <div className="flex justify-between items-center">
                 <h3 className="font-semibold truncate">

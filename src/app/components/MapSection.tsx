@@ -7,13 +7,14 @@ import { LoginPrompt } from "@/app/components/LoginPrompt";
 import { Card } from "@/components/ui/card";
 import { Info } from "lucide-react";
 import MapDisplay from "./MapDisplay";
-import { SupabaseUserData, UserData } from "@/lib/types";
+import { UserData } from "@/lib/types";
+import { User } from "@supabase/supabase-js";
 
 export function MapSection({
   user,
   userData,
 }: {
-  user: SupabaseUserData;
+  user: User | null;
   userData: UserData;
 }) {
   const [geoLocation, setGeoLocation] = useState<{
@@ -159,10 +160,6 @@ export function MapSection({
                       <PetReportForm
                         location={selectedLocation}
                         onClose={handleFormClose}
-                        user={{
-                          id: user.id,
-                          nombre: user.user_metadata?.name,
-                        }}
                         userData={userData}
                       />
                     ) : (

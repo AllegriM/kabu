@@ -1,7 +1,7 @@
 import { LoadingSpinner } from "@/app/components/Loading";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Comment, UserData } from "@/lib/types";
+import { Comment, Create_Comment, SupabaseUserData } from "@/lib/types";
 import { createPublicationComment } from "@/utils/supabase/fetchsClient";
 import { AnimatePresence, motion } from "framer-motion";
 import { Reply, Send } from "lucide-react";
@@ -12,7 +12,7 @@ import { toast } from "sonner";
 interface CommentItemProps {
   comment: Comment;
   allComments: Comment[];
-  user: UserData | null;
+  user: SupabaseUserData | null;
   sightingId: string;
   replyingTo: number | null;
   setReplyingTo: (id: number | null) => void;
@@ -36,12 +36,12 @@ export const CommentItem = ({
   const replies = allComments.filter((c) => c.parent_id === comment.id);
 
   const handleSubmitReply = async () => {
-    if (!user) return toast.error("Debes iniciar sesión para responder");
+    if (!user?.id) return toast.error("Debes iniciar sesión para responder");
     if (replyText.trim().length === 0) return;
 
     setIsSubmittingReply(true);
 
-    const replyData = {
+    const replyData: Create_Comment = {
       user_id: user.id,
       sighting_id: sightingId,
       parent_id: comment.id,

@@ -5,6 +5,11 @@ import { Card } from "@/components/ui/card";
 
 const Map = dynamic(() => import("./Map"), { ssr: false });
 
+interface Location {
+  lat: number;
+  lng: number;
+}
+
 export default function MapDisplay({
   onMapClick,
   selectedLocation,
@@ -12,16 +17,16 @@ export default function MapDisplay({
   fallbackLocation,
 }: {
   onMapClick?: (lat: number, lng: number) => void;
-  selectedLocation?: { lat: number; lng: number } | null;
-  geoLocation?: { lat: number; lng: number } | null;
-  fallbackLocation: { lat: number; lng: number };
+  selectedLocation?: Location | null;
+  geoLocation?: Location | null;
+  fallbackLocation?: Location;
 }) {
   const initialPosition = geoLocation
-    ? [geoLocation.lat, geoLocation.lng]
-    : [fallbackLocation.lat, fallbackLocation.lng];
+    ? ([geoLocation.lat, geoLocation.lng] as [number, number])
+    : ([fallbackLocation?.lat, fallbackLocation?.lng] as [number, number]);
 
   const selectedPosition = selectedLocation
-    ? [selectedLocation.lat, selectedLocation.lng]
+    ? ([selectedLocation.lat, selectedLocation.lng] as [number, number])
     : undefined;
 
   return (
@@ -32,7 +37,9 @@ export default function MapDisplay({
         initialPosition={initialPosition}
         zoom={13}
         userPosition={
-          geoLocation ? [geoLocation.lat, geoLocation.lng] : undefined
+          geoLocation
+            ? ([geoLocation.lat, geoLocation.lng] as [number, number])
+            : undefined
         }
       />
     </Card>

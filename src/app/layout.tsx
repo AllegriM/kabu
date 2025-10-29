@@ -37,6 +37,7 @@ export default async function RootLayout({
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const { data } = await getZoneNotifications();
 
   const plainUser: SupabaseUserData = {
     id: user?.id,
@@ -44,8 +45,6 @@ export default async function RootLayout({
     email: user?.email,
     user_metadata: user?.user_metadata,
   };
-
-  const { data } = await getZoneNotifications();
 
   return (
     <html lang="es" suppressHydrationWarning>
@@ -60,7 +59,7 @@ export default async function RootLayout({
         >
           <Suspense>
             <AuthProvider user={plainUser || null}>
-              <Header user={plainUser} notifications={data} />
+              <Header user={plainUser} notifications={data || []} />
               {children}
             </AuthProvider>
             <Toaster />
